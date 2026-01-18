@@ -1,0 +1,16 @@
+5
+E TR
+R +TR
+R e
+T FY
+Y *FY
+
+id+id*id
+
+
+
+Input string: id+id*id
+
+Parsing Steps:
+...
+String accepted!

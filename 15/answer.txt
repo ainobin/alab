@@ -1,0 +1,12 @@
+Original Grammar:
+=================
+E -> b
+S -> iEtS | iEteS | a
+
+Performing Left Factoring...
+
+After Left Factoring:
+=====================
+E -> b
+S -> a | iEtS'
+S' -> S | eS

@@ -1,0 +1,28 @@
+// Input: 
+6
+S ABC
+A a 
+A e
+B b 
+B e
+C c
+
+
+
+Computing FIRST sets...
+
+FIRST Sets:
+===========
+FIRST(A) = { a, ε }
+FIRST(B) = { b, ε }
+FIRST(C) = { c }
+FIRST(S) = { a, b, c }
+
+Computing FOLLOW sets...
+
+FOLLOW Sets:
+============
+FOLLOW(A) = { b, c }
+FOLLOW(B) = { c }
+FOLLOW(C) = { $ }
+FOLLOW(S) = { $ }

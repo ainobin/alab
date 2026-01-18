@@ -1,0 +1,15 @@
+Keyword: int
+Keyword: main
+Separator: (
+Separator: )
+Separator: {
+Keyword: int
+Identifier: a
+Operator: =
+Constant: 10
+Separator: ;
+Identifier: a
+Operator: +=
+Constant: 5
+Separator: ;
+Separator: }

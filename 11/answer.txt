@@ -1,0 +1,17 @@
+// Input: 
+6
+S ABC
+A a 
+A e
+B b 
+B e
+C c
+
+
+
+FIRST Sets:
+===========
+FIRST(A) = { a, ε }
+FIRST(B) = { b, ε }
+FIRST(C) = { c }
+FIRST(S) = { a, b, c }

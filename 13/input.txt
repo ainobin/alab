@@ -1,0 +1,3 @@
+2
+A Aabb BC 
+B Bca C 

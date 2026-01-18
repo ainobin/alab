@@ -1,0 +1,10 @@
+2
+A 2 Aa b
+B 2 Bb c
+
+
+Grammar after eliminating left recursion:
+A -> bZ
+Z -> aZ | e
+B -> cY
+Y -> bY | e

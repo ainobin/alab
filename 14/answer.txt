@@ -1,0 +1,26 @@
+3
+S aA
+A b
+B e
+
+
+Left Most Derivation:
+S
+=> aA
+=> ab
+
+//============================
+
+5
+S aAB
+A b
+B cC
+C d
+D e
+
+Rightmost Derivation:
+S
+=> aAB
+=> aAcC
+=> aAcd
+=> abcd

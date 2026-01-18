@@ -1,0 +1,6 @@
+_sum
+2value
+10
++
++=
+$value
