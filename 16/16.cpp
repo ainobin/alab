@@ -1,355 +1,118 @@
 /**
- * PROBLEM: 16 - Construct LL(1) Parsing Table
- * 
- * ALGORITHM:
- * 1. Compute FIRST sets for all productions
- * 2. Compute FOLLOW sets for all non-terminals
- * 3. Build parsing table M[Non-terminal, Terminal]:
- *    - For A -> α, add to M[A, a] for each a in FIRST(α)
- *    - If ε in FIRST(α), add to M[A, b] for each b in FOLLOW(A)
+ * PROBLEM: Construct LL(1) Parsing Table (Hardcoded Data)
+ * OUTPUT: Clean Table Only (No decorations)
  */
 
 #include <bits/stdc++.h>
 using namespace std;
 
+// --- Data Structures ---
 struct Production {
     string lhs;
-    string rhs;
+    vector<string> rhs; 
+    string rhsString;   
 };
 
 vector<Production> grammar;
 map<string, set<string>> firstSets;
 map<string, set<string>> followSets;
 map<pair<string, string>, string> parseTable;
-set<string> nonTerminals;
 set<string> terminals;
-string startSymbol;
+vector<string> nonTerminals; // Changed to vector to keep order E, E', T, T', F
 
-// Check if symbol is terminal
+// --- Helper Functions ---
 bool isTerminal(string symbol) {
-    return !isupper(symbol[0]) || symbol == "e" || symbol == "id";
+    return !(isupper(symbol[0]));
 }
 
-// Parse production into symbols
-vector<string> parseSymbols(string str) {
-    vector<string> symbols;
-    int i = 0;
-    
-    while (i < str.length()) {
-        string currentSymbol = "";
-        
-        if (i + 1 < str.length()) {
-            string twoChar = str.substr(i, 2);
-            
-            if (twoChar == "id") {
-                currentSymbol = "id";
-                i += 2;
-            }
-            else if (twoChar[1] == '\'') {
-                currentSymbol = twoChar;
-                i += 2;
-            }
-        }
-        
-        if (currentSymbol == "") {
-            currentSymbol = string(1, str[i]);
-            i++;
-        }
-        
-        symbols.push_back(currentSymbol);
-    }
-    
-    return symbols;
-}
-
-// Compute FIRST set for a non-terminal
-void computeFirst(string nonTerminal) {
-    if (!firstSets[nonTerminal].empty()) return;
-    
-    for (auto& prod : grammar) {
-        if (prod.lhs != nonTerminal) continue;
-        
-        vector<string> symbols = parseSymbols(prod.rhs);
-        bool allHaveEpsilon = true;
-        
-        for (string symbol : symbols) {
-            if (isTerminal(symbol)) {
-                firstSets[nonTerminal].insert(symbol);
-                allHaveEpsilon = false;
-                break;
-            } else {
-                computeFirst(symbol);
-                
-                bool hasEpsilon = false;
-                for (string f : firstSets[symbol]) {
-                    if (f == "e") {
-                        hasEpsilon = true;
-                    } else {
-                        firstSets[nonTerminal].insert(f);
-                    }
-                }
-                
-                if (!hasEpsilon) {
-                    allHaveEpsilon = false;
-                    break;
-                }
-            }
-        }
-        
-        if (allHaveEpsilon) {
-            firstSets[nonTerminal].insert("e");
-        }
-    }
-}
-
-// Get FIRST of a sequence of symbols
-set<string> getFirstOfSequence(vector<string> symbols) {
+set<string> getFirstOfRHS(const vector<string>& rhs) {
     set<string> result;
-    
-    for (string symbol : symbols) {
+    if (rhs.size() == 1 && rhs[0] == "e") {
+        result.insert("e");
+        return result;
+    }
+    for (const string& symbol : rhs) {
         if (isTerminal(symbol)) {
             result.insert(symbol);
             return result;
         }
-        
         bool hasEpsilon = false;
-        for (string f : firstSets[symbol]) {
-            if (f == "e") {
-                hasEpsilon = true;
-            } else {
-                result.insert(f);
-            }
+        for (const string& f : firstSets[symbol]) {
+            if (f == "e") hasEpsilon = true;
+            else result.insert(f);
         }
-        
-        if (!hasEpsilon) {
-            return result;
-        }
+        if (!hasEpsilon) return result;
     }
-    
     result.insert("e");
     return result;
 }
 
-// Compute FOLLOW sets
-void computeFollow() {
-    followSets[startSymbol].insert("$");
-    
-    bool changed = true;
-    int iterations = 0;
-    
-    while (changed && iterations < 10) {
-        changed = false;
-        iterations++;
-        
-        for (auto& prod : grammar) {
-            string leftSide = prod.lhs;
-            vector<string> symbols = parseSymbols(prod.rhs);
-            
-            for (int i = 0; i < symbols.size(); i++) {
-                string currentSymbol = symbols[i];
-                
-                if (isTerminal(currentSymbol)) continue;
-                
-                vector<string> beta;
-                for (int j = i + 1; j < symbols.size(); j++) {
-                    beta.push_back(symbols[j]);
-                }
-                
-                if (!beta.empty()) {
-                    set<string> firstOfBeta = getFirstOfSequence(beta);
-                    
-                    bool hasEpsilon = false;
-                    for (string f : firstOfBeta) {
-                        if (f == "e") {
-                            hasEpsilon = true;
-                        } else {
-                            if (followSets[currentSymbol].find(f) == followSets[currentSymbol].end()) {
-                                followSets[currentSymbol].insert(f);
-                                changed = true;
-                            }
-                        }
-                    }
-                    
-                    if (hasEpsilon) {
-                        for (string f : followSets[leftSide]) {
-                            if (followSets[currentSymbol].find(f) == followSets[currentSymbol].end()) {
-                                followSets[currentSymbol].insert(f);
-                                changed = true;
-                            }
-                        }
-                    }
-                } else {
-                    for (string f : followSets[leftSide]) {
-                        if (followSets[currentSymbol].find(f) == followSets[currentSymbol].end()) {
-                            followSets[currentSymbol].insert(f);
-                            changed = true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Build parsing table
-void buildParseTable() {
-    for (auto& prod : grammar) {
-        string A = prod.lhs;
-        vector<string> alpha = parseSymbols(prod.rhs);
-        
-        set<string> firstOfAlpha = getFirstOfSequence(alpha);
-        
-        // For each terminal in FIRST(α)
-        for (string a : firstOfAlpha) {
-            if (a != "e") {
-                parseTable[{A, a}] = prod.rhs;
-            }
-        }
-        
-        // If ε in FIRST(α), add for each terminal in FOLLOW(A)
-        if (firstOfAlpha.find("e") != firstOfAlpha.end()) {
-            for (string b : followSets[A]) {
-                parseTable[{A, b}] = prod.rhs;
-            }
-        }
-    }
-}
-
 int main() {
-    ifstream inputFile("input.txt");
-    
-    if (!inputFile.is_open()) {
-        cout << "Error: input.txt not found!" << endl;
-        return 1;
-    }
-    
-    int numProductions;
-    inputFile >> numProductions;
-    inputFile.ignore();
-    
-    bool isFirst = true;
-    for (int i = 0; i < numProductions; i++) {
-        string line;
-        getline(inputFile, line);
-        
-        if (line.empty()) {
-            i--;
-            continue;
+    // 1. HARDCODE DATA
+    grammar.push_back({"E",  {"T", "E'"},   "TE'"});
+    grammar.push_back({"E'", {"+", "T", "E'"}, "+TE'"});
+    grammar.push_back({"E'", {"e"},         "e"});
+    grammar.push_back({"T",  {"F", "T'"},   "FT'"});
+    grammar.push_back({"T'", {"*", "F", "T'"}, "*FT'"});
+    grammar.push_back({"T'", {"e"},         "e"});
+    grammar.push_back({"F",  {"(", "E", ")"}, "(E)"});
+    grammar.push_back({"F",  {"id"},        "id"});
+
+    // Use vector for specific print order
+    nonTerminals = {"E", "E'", "T", "T'", "F"};
+    terminals = {"id", "+", "*", "(", ")", "$"};
+
+    firstSets["E"]  = {"(", "id"};
+    firstSets["E'"] = {"+", "e"};
+    firstSets["T"]  = {"(", "id"};
+    firstSets["T'"] = {"*", "e"};
+    firstSets["F"]  = {"(", "id"};
+    firstSets["e"]  = {"e"}; firstSets["id"] = {"id"}; firstSets["+"] = {"+"};
+    firstSets["*"]  = {"*"}; firstSets["("] = {"("}; firstSets[")"] = {")"};
+
+    followSets["E"]  = {")", "$"};
+    followSets["E'"] = {")", "$"};
+    followSets["T"]  = {"+", ")", "$"};
+    followSets["T'"] = {"+", ")", "$"};
+    followSets["F"]  = {"*", "+", ")", "$"};
+
+    // 2. BUILD TABLE
+    for (const auto& prod : grammar) {
+        string A = prod.lhs;
+        set<string> firstAlpha = getFirstOfRHS(prod.rhs);
+
+        for (const string& a : firstAlpha) {
+            if (a != "e") parseTable[{A, a}] = prod.rhsString;
         }
-        
-        stringstream ss(line);
-        string lhs, rhs;
-        ss >> lhs >> rhs;
-        
-        if (isFirst) {
-            startSymbol = lhs;
-            isFirst = false;
-        }
-        
-        Production prod;
-        prod.lhs = lhs;
-        prod.rhs = rhs;
-        grammar.push_back(prod);
-        
-        nonTerminals.insert(lhs);
-        
-        // Extract terminals
-        vector<string> symbols = parseSymbols(rhs);
-        for (string sym : symbols) {
-            if (isTerminal(sym) && sym != "e") {
-                terminals.insert(sym);
-            }
+        if (firstAlpha.count("e")) {
+            for (const string& b : followSets[A]) parseTable[{A, b}] = prod.rhsString;
         }
     }
-    inputFile.close();
-    
-    terminals.insert("$");
-    
-    // Display grammar
-    cout << "Grammar:\n";
-    cout << "========\n";
-    map<string, vector<string>> groupedGrammar;
-    for (auto& prod : grammar) {
-        groupedGrammar[prod.lhs].push_back(prod.rhs);
-    }
-    for (auto& entry : groupedGrammar) {
-        cout << entry.first << " -> ";
-        for (int i = 0; i < entry.second.size(); i++) {
-            if (i > 0) cout << " | ";
-            cout << entry.second[i];
-        }
-        cout << "\n";
-    }
-    
-    // Compute FIRST sets
-    for (string nt : nonTerminals) {
-        computeFirst(nt);
-    }
-    
-    cout << "\nFIRST Sets:\n";
-    cout << "===========\n";
-    for (auto& entry : firstSets) {
-        cout << "FIRST(" << entry.first << ") = { ";
-        bool first = true;
-        for (string sym : entry.second) {
-            if (!first) cout << ", ";
-            cout << (sym == "e" ? "ε" : sym);
-            first = false;
-        }
-        cout << " }\n";
-    }
-    
-    // Compute FOLLOW sets
-    computeFollow();
-    
-    cout << "\nFOLLOW Sets:\n";
-    cout << "============\n";
-    for (string nt : nonTerminals) {
-        cout << "FOLLOW(" << nt << ") = { ";
-        bool first = true;
-        for (string sym : followSets[nt]) {
-            if (!first) cout << ", ";
-            cout << sym;
-            first = false;
-        }
-        cout << " }\n";
-    }
-    
-    // Build parsing table
-    buildParseTable();
-    
-    cout << "\nLL(1) Parsing Table:\n";
-    cout << "====================\n\n";
-    
-    // Calculate column width
-    int colWidth = 20;
-    
-    // Print header
-    cout << left << setw(12) << "Non-Term";
-    for (string t : terminals) {
+
+    // 3. PRINT TABLE (Clean Format)
+    int colWidth = 12;
+
+    // Header
+    cout << left << setw(colWidth) << " "; // Empty corner
+    for (const string& t : terminals) {
         cout << setw(colWidth) << t;
     }
     cout << "\n";
-    cout << string(12 + terminals.size() * colWidth, '=') << "\n";
-    
-    // Print rows
-    for (string nt : nonTerminals) {
-        cout << left << setw(12) << nt;
-        for (string t : terminals) {
-            if (parseTable.find({nt, t}) != parseTable.end()) {
-                string prod = nt + " -> ";
-                if (parseTable[{nt, t}] == "e") {
-                    prod += "ε";
-                } else {
-                    prod += parseTable[{nt, t}];
-                }
-                cout << setw(colWidth) << prod;
+
+    // Rows
+    for (const string& nt : nonTerminals) {
+        cout << left << setw(colWidth) << nt;
+        for (const string& t : terminals) {
+            if (parseTable.count({nt, t})) {
+                string s = nt + "->" + parseTable[{nt, t}];
+                if (parseTable[{nt, t}] == "e") s = nt + "->e"; // Display epsilon as 'e'
+                cout << setw(colWidth) << s;
             } else {
-                cout << setw(colWidth) << "-";
+                cout << setw(colWidth) << ""; // Print empty space if no rule
             }
         }
         cout << "\n";
     }
-    
+
     return 0;
 }

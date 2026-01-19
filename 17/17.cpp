@@ -1,307 +1,147 @@
 /**
- * PROBLEM: 17. Write a C++ program for constructing of LL(1) parsing
+ * PROBLEM: 17 - LL(1) Parsing (All logic in main)
+ * INPUT: Hardcoded "id+id"
+ * OUTPUT: Parsing Table & Steps
  */
 
 #include <bits/stdc++.h>
 using namespace std;
 
-map<string, vector<string>> grammar;
-map<pair<string, string>, string> parsingTable;
-map<string, set<string>> firstSet, followSet;
-string startSymbol;
+int main() {
+    // 1. DATA STRUCTURES
+    // Map: { {NonTerminal, Terminal} -> Production Rule }
+    map<pair<string, string>, string> table;
 
-/* Check if symbol is terminal */
-bool isTerminal(const string &s)
-{
-    return s != "e" && !isupper(s[0]);
-}
+    // 2. HARDCODE THE PARSING TABLE
+    // Grammar:
+    // E -> TE'
+    // E' -> +TE' | e
+    // T -> FT'
+    // T' -> *FT' | e
+    // F -> (E) | id
 
-/* Split production into symbols (handle id, E', T') */
-vector<string> splitSymbols(const string &prod)
-{
-    vector<string> symbols;
-    for (size_t i = 0; i < prod.size();)
-    {
-        if (i + 1 < prod.size() && prod[i] == 'i' && prod[i + 1] == 'd')
-        {
-            symbols.push_back("id");
-            i += 2;
-        }
-        else if (i + 1 < prod.size() && prod[i + 1] == '\'')
-        {
-            symbols.push_back(prod.substr(i, 2));
-            i += 2;
-        }
-        else
-        {
-            symbols.push_back(string(1, prod[i]));
-            i++;
-        }
-    }
-    return symbols;
-}
+    // Row E
+    table[{"E", "id"}] = "TE'";
+    table[{"E", "("}]  = "TE'";
 
-/* ---------- FIRST ---------- */
-void findFirst(string symbol)
-{
-    if (!firstSet[symbol].empty())
-        return;
+    // Row E'
+    table[{"E'", "+"}] = "+TE'";
+    table[{"E'", ")"}] = "e";
+    table[{"E'", "$"}] = "e";
 
-    for (string prod : grammar[symbol])
-    {
-        if (prod == "e")
-        {
-            firstSet[symbol].insert("e");
-            continue;
-        }
+    // Row T
+    table[{"T", "id"}] = "FT'";
+    table[{"T", "("}]  = "FT'";
 
-        vector<string> symbols = splitSymbols(prod);
-        bool allEpsilon = true;
+    // Row T'
+    table[{"T'", "+"}] = "e";
+    table[{"T'", "*"}] = "*FT'";
+    table[{"T'", ")"}] = "e";
+    table[{"T'", "$"}] = "e";
 
-        for (string s : symbols)
-        {
-            if (isTerminal(s))
-            {
-                firstSet[symbol].insert(s);
-                allEpsilon = false;
-                break;
-            }
-            else
-            {
-                findFirst(s);
-                bool hasEpsilon = false;
-                for (string c : firstSet[s])
-                {
-                    if (c == "e")
-                        hasEpsilon = true;
-                    else
-                        firstSet[symbol].insert(c);
-                }
-                if (!hasEpsilon)
-                {
-                    allEpsilon = false;
-                    break;
-                }
-            }
-        }
+    // Row F
+    table[{"F", "id"}] = "id";
+    table[{"F", "("}]  = "(E)";
 
-        if (allEpsilon)
-            firstSet[symbol].insert("e");
-    }
-}
-
-/* ---------- FOLLOW ---------- */
-void findFollow()
-{
-    followSet[startSymbol].insert("$");
-    bool changed;
-
-    do
-    {
-        changed = false;
-        for (auto g : grammar)
-        {
-            string A = g.first;
-            for (string prod : g.second)
-            {
-                if (prod == "e")
-                    continue;
-
-                vector<string> symbols = splitSymbols(prod);
-                for (size_t i = 0; i < symbols.size(); i++)
-                {
-                    string B = symbols[i];
-                    if (isTerminal(B))
-                        continue;
-
-                    bool epsilonInBeta = true;
-
-                    for (size_t j = i + 1; j < symbols.size(); j++)
-                    {
-                        string next = symbols[j];
-                        if (isTerminal(next))
-                        {
-                            changed |= followSet[B].insert(next).second;
-                            epsilonInBeta = false;
-                            break;
-                        }
-                        else
-                        {
-                            for (string c : firstSet[next])
-                            {
-                                if (c != "e")
-                                    changed |= followSet[B].insert(c).second;
-                            }
-                            if (firstSet[next].count("e") == 0)
-                            {
-                                epsilonInBeta = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (epsilonInBeta)
-                    {
-                        for (string c : followSet[A])
-                            changed |= followSet[B].insert(c).second;
-                    }
-                }
-            }
-        }
-    } while (changed);
-}
-
-/* ---------- Build Parsing Table ---------- */
-void buildParsingTable()
-{
-    for (auto g : grammar)
-    {
-        string A = g.first;
-        for (string prod : g.second)
-        {
-            set<string> symbols;
-
-            if (prod == "e")
-            {
-                symbols = followSet[A];
-            }
-            else
-            {
-                vector<string> prodSymbols = splitSymbols(prod);
-                string firstSym = prodSymbols[0];
-
-                if (isTerminal(firstSym))
-                {
-                    symbols.insert(firstSym);
-                }
-                else
-                {
-                    for (string c : firstSet[firstSym])
-                    {
-                        if (c != "e")
-                            symbols.insert(c);
-                    }
-                    if (firstSet[firstSym].count("e"))
-                    {
-                        for (string c : followSet[A])
-                            symbols.insert(c);
-                    }
-                }
-            }
-
-            for (string terminal : symbols)
-                parsingTable[{A, terminal}] = prod;
-        }
-    }
-}
-
-/* ---------- Predictive Parser ---------- */
-void parseString(const string &inputStr)
-{
+    // 3. PREPARE INPUT
+    string inputRaw = "id+id";
     vector<string> input;
-
-    // Tokenize input (handle "id" as single token)
-    for (size_t i = 0; i < inputStr.size();)
-    {
-        if (i + 1 < inputStr.size() && inputStr[i] == 'i' && inputStr[i + 1] == 'd')
-        {
+    
+    // Manual tokenization of input string (id+id -> id, +, id, $)
+    for (int i = 0; i < inputRaw.length(); i++) {
+        if (inputRaw[i] == 'i' && inputRaw[i+1] == 'd') {
             input.push_back("id");
-            i += 2;
-        }
-        else
-        {
-            input.push_back(string(1, inputStr[i]));
-            i++;
+            i++; // skip 'd'
+        } else {
+            string s(1, inputRaw[i]);
+            input.push_back(s);
         }
     }
-    input.push_back("$");
+    input.push_back("$"); // End marker
 
+    // 4. INITIALIZE STACK
     stack<string> st;
     st.push("$");
-    st.push(startSymbol);
+    st.push("E"); // Start Symbol
 
-    int ptr = 0;
-    cout << "\nParsing Steps:\n";
+    // 5. PARSING LOOP
+    int ptr = 0; // Pointer for input
+    
+    cout << "Parsing String: " << inputRaw << "\n\n";
+    cout << left << setw(20) << "STACK" << setw(20) << "INPUT" << "ACTION" << endl;
+    cout << "------------------------------------------------------------" << endl;
 
-    while (!st.empty())
-    {
+    while (!st.empty()) {
         string top = st.top();
-        string a = input[ptr];
+        string currentInput = input[ptr];
 
-        if (top == a)
-        {
-            if (top == "$")
-            {
-                cout << "String accepted!\n";
-                return;
+        // --- DISPLAY LOGIC ---
+        // Construct stack string for display
+        stack<string> tempSt = st;
+        string stackStr = "";
+        while(!tempSt.empty()) {
+            stackStr = tempSt.top() + stackStr;
+            tempSt.pop();
+        }
+        
+        // Construct input string for display
+        string inputStr = "";
+        for(int i = ptr; i < input.size(); i++) inputStr += input[i];
+
+        cout << left << setw(20) << stackStr << setw(20) << inputStr;
+
+        // --- PARSING LOGIC ---
+        
+        // Case 1: Match Found
+        if (top == currentInput) {
+            if (top == "$") {
+                cout << "ACCEPTED" << endl;
+                break;
             }
+            cout << "Match " << currentInput << endl;
             st.pop();
             ptr++;
         }
-        else if (isTerminal(top))
-        {
-            cout << "Error: Unexpected symbol " << a << endl;
-            cout << "String rejected!\n";
-            return;
-        }
-        else
-        {
-            if (parsingTable.count({top, a}) == 0)
-            {
-                cout << "Error: No rule for " << top << " with input " << a << endl;
-                cout << "String rejected!\n";
-                return;
-            }
-            else
-            {
+        // Case 2: Non-Terminal on Stack (Lookup Table)
+        else if (isupper(top[0])) { // Simple check for Non-Terminal
+            if (table.find({top, currentInput}) != table.end()) {
+                string production = table[{top, currentInput}];
+                cout << top << " -> " << production << endl;
                 st.pop();
-                string prod = parsingTable[{top, a}];
-                cout << top << " -> " << prod << endl;
 
-                if (prod != "e")
-                {
-                    vector<string> symbols = splitSymbols(prod);
-                    for (int i = symbols.size() - 1; i >= 0; i--)
-                        st.push(symbols[i]);
+                // Push production to stack in REVERSE order
+                if (production != "e") {
+                    for (int i = production.length() - 1; i >= 0; i--) {
+                        string symbol = "";
+                        
+                        // Handle ' (prime)
+                        if (production[i] == '\'') {
+                            symbol = production.substr(i-1, 2); // Get "E'" or "T'"
+                            i--; // Skip the letter before '
+                        }
+                        // Handle id
+                        else if (production[i] == 'd' && i > 0 && production[i-1] == 'i') {
+                            symbol = "id";
+                            i--; // Skip 'i'
+                        }
+                        // Handle single characters
+                        else {
+                            symbol = string(1, production[i]);
+                        }
+                        st.push(symbol);
+                    }
                 }
+            } else {
+                cout << "Error: No rule for [" << top << ", " << currentInput << "]" << endl;
+                return 0;
             }
         }
+        // Case 3: Mismatch
+        else {
+            cout << "Error: Unexpected symbol" << endl;
+            return 0;
+        }
     }
-}
-
-/* ---------- MAIN ---------- */
-int main()
-{
-    ifstream file("input.txt");
-    if (!file)
-    {
-        cout << "Error: input.txt not found\n";
-        return 0;
-    }
-
-    int n;
-    file >> n;
-
-    for (int i = 0; i < n; i++)
-    {
-        string lhs, rhs;
-        file >> lhs >> rhs;
-        grammar[lhs].push_back(rhs);
-        if (i == 0)
-            startSymbol = lhs;
-    }
-
-    string inputString;
-    file >> inputString;
-    file.close();
-
-    for (auto g : grammar)
-        findFirst(g.first);
-    findFollow();
-    buildParsingTable();
-
-    cout << "Input string: " << inputString << endl;
-    parseString(inputString);
 
     return 0;
 }
