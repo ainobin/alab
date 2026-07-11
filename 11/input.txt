@@ -1,7 +1,0 @@
-6
-S ABC
-A a 
-A e
-B b 
-B e
-C c

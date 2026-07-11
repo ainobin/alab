@@ -1,0 +1,587 @@
+
+Experiment 01: Write a Prolog program to print a list of items
+----------------------------------------------------
+item(tshirt).
+item(pant).
+item(caps).
+item(shirt).
+item(shoe).
+item(sunglass).
+
+products :-
+    item(X),
+    write(X),
+    nl,
+    fail.
+
+Query: ?- products.
+-----
+print_list([]).
+print_list([H|T]) :- write(H), write(’ ’), print_list(T).
+
+?- print_list([apple, banana, cherry, date]).
+apple banana cherry date
+true.
+-----
+
+Experiment 02: Write a Prolog program to find maximum between two numbers
+----------------------------------------------------
+max(X,Y,X) :-
+    X >= Y.
+
+max(X,Y,Y) :-
+    Y > X.
+
+Query: ?- max(10,7,M).
+
+
+Experiment 03: Write a Prolog program to find the GPA of a student
+----------------------------------------------------
+gpa(ashik,3.45).
+gpa(rukon,3.50).
+gpa(moni,3.25).
+gpa(zaman,3.35).
+gpa(abid,3.55).
+
+result :-
+    write('Enter student name: '),
+    read(X),
+    gpa(X,Y),
+    nl,
+    write('GPA is '),
+    write(Y).
+
+Query: ?- result.
+
+----
+gpa(Mark, 4.00) :- Mark >= 80.
+gpa(Mark, 3.75) :- Mark >= 75, Mark < 80.
+gpa(Mark, 3.50) :- Mark >= 70, Mark < 75.
+gpa(Mark, 3.25) :- Mark >= 65, Mark < 70.
+gpa(Mark, 3.00) :- Mark >= 60, Mark < 65.
+gpa(Mark, 2.75) :- Mark >= 55, Mark < 60.
+gpa(Mark, 2.50) :- Mark >= 50, Mark < 55.
+gpa(Mark, 2.25) :- Mark >= 45, Mark < 50.
+gpa(Mark, 2.00) :- Mark >= 40, Mark < 45.
+gpa(Mark, 0.00) :- Mark < 40.
+
+?- gpa(82, Gpa).
+Gpa = 4.0.
+------
+
+Experiment 04: Write a Prolog program that describes the student-professor relationships
+----------------------------------------------------
+studies(tamanna,cse421).
+studies(tirana,cse421).
+studies(sayem,cse422).
+studies(tamanna,cse452).
+studies(tamanna,cse423).
+
+teaches(selim_sir,cse452).
+teaches(mijan_sir,cse421).
+teaches(ujjal_sir,cse423).
+
+professor(X,Y) :-
+    teaches(X,Z),
+    studies(Y,Z).
+
+Query: ?- professor(mijan_sir,tamanna).
+
+
+Experiment 05: Write a Prolog program to find nth number of Fibonacci series
+----------------------------------------------------
+fib(1,1).
+fib(2,1).
+
+fib(N,F) :-
+    N > 2,
+    N1 is N-1,
+    N2 is N-2,
+    fib(N1,F1),
+    fib(N2,F2),
+    F is F1+F2.
+
+Query: ?- fib(5,F).
+
+
+Experiment 06: Write a Prolog program to calculate factorial of a number
+----------------------------------------------------
+fact(0,1).
+
+fact(N,F) :-
+    N > 0,
+    N1 is N-1,
+    fact(N1,F1),
+    F is N*F1.
+
+Query: ?- fact(5,F).
+
+-----
+factorial(0, 1).
+factorial(N, Result) :- N > 0, N1 is N - 1, factorial(N1, R1), Result is N *
+R1.
+
+?- factorial(5, Result).
+Result = 120.
+-----
+
+Experiment 07: Write a Prolog program to demonstrate the cube of a number
+----------------------------------------------------
+cube :-
+    write('Enter a number: '),
+    read(X),
+    process(X).
+
+process(stop) :- !.
+
+process(N) :-
+    C is N*N*N,
+    write('Cube of '),
+    write(N),
+    write(' is '),
+    write(C),
+    nl,
+    cube.
+
+Query: ?- cube.
+
+
+------
+cube(N, Result) :- Result is N * N * N.
+
+?- cube(3, Result).
+Result = 27.
+------
+
+
+Experiment 08: Write a Prolog program to satisfy a list of goals
+----------------------------------------------------
+big(bear).
+big(elephant).
+
+small(cat).
+small(dog).
+
+brown(bear).
+black(cat).
+black(dog).
+gray(elephant).
+
+dark(Z) :-
+    black(Z).
+
+dark(Z) :-
+    brown(Z).
+
+dark(Z) :-
+    gray(Z).
+
+Query: ?- dark(cat).
+
+
+------
+satisfy_goals([]).
+satisfy_goals([Goal|Rest]) :- call(Goal), satisfy_goals(Rest).
+
+?- satisfy_goals([write(’First ’), write(’Second ’), write(’Third’)]).
+First Second Third
+true.
+------
+
+
+Experiment 09: Write a Prolog program to find GCD and LCM of two numbers
+----------------------------------------------------
+gcd(X,0,X).
+
+gcd(X,Y,D) :-
+    Y > 0,
+    R is X mod Y,
+    gcd(Y,R,D).
+
+lcm(X,Y,M) :-
+    gcd(X,Y,D),
+    M is (X*Y)/D.
+
+Query: ?- gcd(12,9,GCD).
+Query: ?- lcm(5,7,LCM).
+
+
+Experiment 10: Write a Prolog program for a cyclic graph
+----------------------------------------------------
+edge(a,b).
+edge(a,c).
+edge(b,d).
+edge(d,e).
+edge(e,b).
+
+path(A,B) :-
+    nextRoute(A,B,[]),
+    write(B).
+
+nextRoute(A,B,V) :-
+    edge(A,X),
+    write(A),
+    write('->'),
+    not(member(X,V)),
+    (
+        B = X
+        ;
+        nextRoute(X,B,[A|V])
+        ;
+        write(X)
+    ).
+
+Query: ?- path(a,e).
+
+
+Experiment 11: Write a Prolog program for file handling
+----------------------------------------------------
+% Writing into a file
+writeinfile :-
+    tell('mfile.txt'),
+    write('start.'),
+    told.
+
+% Reading from a file
+readfromfile(Infile, Outfile) :-
+    see(Infile),
+    tell(Outfile),
+    read(X1),
+    read(X2),
+    read(X3),
+    write(X1), nl,
+    write(X2), nl,
+    write(X3), nl,
+    seen,
+    told.
+
+Query: ?- writeinfile.
+Query: ?- readfromfile('input.txt','output.txt').
+
+------
+write_to_file :-
+    tell('my_data.txt'),
+    write('hello_prolog.'),
+    nl,
+    write('sha.'),
+    told.
+
+read_from_file :-
+    see('my_data.txt'),
+    read(X),
+    write(X),
+    nl,
+    read(Y),
+    write(Y),
+    seen.
+------
+
+Experiment 12: Write a Prolog program to implement bubble sort
+----------------------------------------------------
+bubblesort(InputList,SortList) :-
+    swap(InputList,List),
+    !,
+    printlist(List),
+    bubblesort(List,SortList).
+
+bubblesort(SortList,SortList).
+
+swap([X,Y|List],[Y,X|List]) :-
+    X > Y.
+
+swap([Z|List],[Z|List1]) :-
+    swap(List,List1).
+
+printlist([]) :-
+    nl.
+
+printlist([Head|List]) :-
+    write(Head),
+    write(' '),
+    printlist(List).
+
+Query: ?- bubblesort([4,2,3,1],R).
+
+
+Experiment 13: Write a Prolog program to concatenate two lists
+----------------------------------------------------
+list_concat([],L,L).
+
+list_concat([X1|L1],L2,[X1|L3]) :-
+    list_concat(L1,L2,L3).
+
+Query: ?- list_concat([1,2,3],[a,b,c],R).
+
+
+Experiment 14: Write a Prolog program to delete an element from a list
+----------------------------------------------------
+list_delete(X,[X],[]).
+
+list_delete(X,[X|L1],L1).
+
+list_delete(X,[Y|L2],[Y|L1]) :-
+    list_delete(X,L2,L1).
+
+Query: ?- list_delete(3,[1,2,3,4],R).
+
+
+Experiment 15: Write a Prolog program to insert an element into a list
+----------------------------------------------------
+list_insert(X,L,R) :-
+    list_delete(X,R,L).
+
+Query: ?- list_insert(5,[6,4,3,1],R).
+
+
+Experiment 16: Write a LISP program applying basic LIST manipulation function and verify their operation
+----------------------------------------------------
+(setq mylist '(10 20 30 40 50))
+
+(print (car mylist))
+(print (cdr mylist))
+(print (cons 5 mylist))
+(print (list 1 2 3))
+(print (append mylist '(60 70)))
+
+------
+(setq my-list '(a b c d))
+(setq list-two '(e f))
+(print (car my-list))
+(print (cdr my-list))
+(print (cons 'z my-list))
+(print (append my-list list-two))
+(print (length my-list))
+(print (reverse my-list))
+------
+
+------
+(with-open-file (s "p16.lisp")
+(loop for form = (read s nil nil)
+while form
+do (print (eval form))))
+------
+
+Experiment 17: Write a LISP program applying additional LIST manipulation function and verify their operation
+----------------------------------------------------
+(setq mylist '(1 2 3 4 5))
+
+(print (reverse mylist))
+(print (member 3 mylist))
+(print (nth 2 mylist))
+(print (length mylist))
+(print (mapcar #'(lambda (x) (* x x)) mylist))
+
+
+------
+(with-open-file (s "p17.lisp")
+(loop for form = (read s nil nil)
+while form
+do (print (eval form))))
+------
+
+Experiment 18: Write a LISP program to calculate the maximum and minimum of some numbers
+----------------------------------------------------
+(setq numlist '(23 45 12 67 34))
+
+(print (apply #'max numlist))
+(print (apply #'min numlist))
+
+-------
+(with-open-file (s "p18.lisp")
+(loop for form = (read s nil nil)
+while form
+do (print (eval form))))
+-------
+
+
+Experiment 19: Write a LISP program using PutProp function to get different properties of an object
+----------------------------------------------------
+(setf (get 'ball 'color) 'red)
+(setf (get 'ball 'size) 'small)
+(setf (get 'ball 'material) 'rubber)
+
+(print (get 'ball 'color))
+(print (get 'ball 'size))
+(print (get 'ball 'material))
+
+
+-------
+(with-open-file (s "p19.lisp")
+(loop for form = (read s nil nil)
+while form
+do (print (eval form))))
+-------
+
+Experiment 20: Write a C++ program to implement Breadth First Search algorithm
+----------------------------------------------------
+#include <iostream>
+#include <queue>
+#include <vector>
+using namespace std;
+
+int main() {
+    int n = 6;
+    vector<vector<int>> graph = {
+        {1, 2}, {0, 3, 4}, {0, 4}, {1, 5}, {1, 2, 5}, {3, 4}
+    };
+    vector<bool> visited(n, false);
+    queue<int> q;
+
+    q.push(0);
+    visited[0] = true;
+
+    cout << "BFS Traversal: ";
+    while (!q.empty()) {
+        int node = q.front();
+        q.pop();
+        cout << node << " ";
+
+        for (int neighbor : graph[node]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push(neighbor);
+            }
+        }
+    }
+    return 0;
+}
+
+        0
+       / \
+      1---2
+     / \  |
+    3   \ |
+     \   \|
+      5---4
+
+Experiment 21: Write a C++ program to implement Depth First Search algorithm
+----------------------------------------------------
+#include <iostream>
+#include <vector>
+using namespace std;
+
+vector<vector<int>> graph;
+vector<bool> visited;
+
+void dfs(int node) {
+    visited[node] = true;
+    cout << node << " ";
+
+    for (int neighbor : graph[node]) {
+        if (!visited[neighbor]) {
+            dfs(neighbor);
+        }
+    }
+}
+
+int main() {
+    int n = 6;
+    graph = {
+        {1, 2}, {0, 3, 4}, {0, 4}, {1, 5}, {1, 2, 5}, {3, 4}
+    };
+    visited.assign(n, false);
+
+    cout << "DFS Traversal: ";
+    dfs(0);
+    return 0;
+}
+
+
+        0
+       / \
+      1---2
+     / \  |
+    3   \ |
+     \   \|
+      5---4
+
+
+
+
+Experiment 22: Write a C++ program to implement A* Search algorithm.
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+struct Node
+{
+    int id;     // Current node
+    int cost;   // f = g + h
+
+    bool operator>(const Node &other) const
+    {
+        return cost > other.cost;
+    }
+};
+
+int main()
+{
+    // Graph: {neighbor, edge cost}
+    vector<vector<pair<int,int>>> graph =
+    {
+        {{1,2}, {2,5}},   // 0
+        {{2,4}, {3,6}},   // 1
+        {{3,2}},          // 2
+        {{4,3}},          // 3
+        {}                // 4
+    };
+
+    vector<int> h = {7,6,2,1,0};
+
+    priority_queue<Node, vector<Node>, greater<Node>> pq;
+
+    vector<int> g(5, 100000);
+    vector<int> parent(5, -1);
+
+    int start = 0;
+    int goal = 4;
+
+    g[start] = 0;
+    pq.push({start, h[start]});
+
+    while (!pq.empty())
+    {
+        Node current = pq.top();
+        pq.pop();
+
+        if (current.id == goal)
+            break;
+
+        for (auto edge : graph[current.id])
+        {
+            int next = edge.first;
+            int weight = edge.second;
+
+            if (g[current.id] + weight < g[next])
+            {
+                g[next] = g[current.id] + weight;
+                parent[next] = current.id;
+
+                int f = g[next] + h[next];
+                pq.push({next, f});
+            }
+        }
+    }
+
+    cout << "Cost = " << g[goal] << endl;
+
+    cout << "Path: ";
+
+    vector<int> path;
+    for (int i = goal; i != -1; i = parent[i])
+        path.push_back(i);
+
+    for (int i = path.size()-1; i >= 0; i--)
+        cout << path[i] << " ";
+}
+
+
+        (2)
+    0 ------> 1
+    |         | \
+ (5)|      (4)|  \(6)
+    |         |   \
+    v         v    v
+    2 -----> 3 ----> 4
+      (2)      (3)
