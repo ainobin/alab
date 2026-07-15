@@ -1,0 +1,27 @@
+%{
+  Problem 9: Effect of Bit Resolution
+• Quantize signal using 2, 4, 8 bits 
+• Compare signal quality and error  
+%}
+
+% Problem 9: Effect of Bit Resolution
+% Quantize a signal using 2, 4, and 8 bits
+
+clc;
+clear;
+close all;
+t = linspace(0,1,1000);
+x = sin(2*pi*3*t);
+bits_list = [2 4 8];
+ 
+figure;
+for i = 1:3
+    bits = bits_list(i);
+    L = 2^bits;
+    xq = round((x+1)/2*(L-1)) / (L-1) * 2 - 1;
+    mse = mean((x-xq).^2);
+ 
+    subplot(3,1,i);
+    plot(t,x, 'blue', 'LineWidth',1); hold on;
+    stairs(t,xq,'r');
+    title([num2str(bits) '-bit Quantization, MSE = ' num2str(mse)]);
